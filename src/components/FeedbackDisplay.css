@@ -1,0 +1,49 @@
+.feedback-display {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  max-width: 100%;
+}
+
+.clean-feedback {
+  color: #28a745;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.issue-feedback {
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 8px;
+  padding: 0.5rem;
+  color: #856404;
+}
+
+.corrections-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.correction-pill {
+  background-color: #ffeeba;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.correction-type {
+  font-weight: bold;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #dc3545;
+}
+
+.feedback-remember {
+  margin-top: 0.25rem;
+  font-weight: 500;
+}

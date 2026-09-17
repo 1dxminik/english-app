@@ -1,0 +1,32 @@
+.memory-editor {
+  background-color: #fff;
+  border: 1px solid #ddd;
+}
+
+.memory-editor h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.memory-editor textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.memory-editor select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
