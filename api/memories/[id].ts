@@ -1,4 +1,4 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getRequestContext, setCorsHeaders } from '../_lib/auth.js';
 import { validateUpdateMemory } from '../_lib/validation.js';
 

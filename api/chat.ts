@@ -1,4 +1,4 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getRequestContext, setCorsHeaders } from './_lib/auth.js';
 import { validateChatRequest } from './_lib/validation.js';
 import { checkRateLimit } from './_lib/rate-limit.js';
