@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { getRequestContext, setCorsHeaders } from './_lib/auth';
+import { getRequestContext, setCorsHeaders } from './_lib/auth.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setCorsHeaders(res);
@@ -14,6 +14,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(200).json(data);
   } catch (error: any) {
     console.error('Characters error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: error?.message || 'Internal server error' });
   }
 }

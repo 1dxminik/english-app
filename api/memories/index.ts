@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { getRequestContext, setCorsHeaders } from '../_lib/auth';
-import { validateCreateMemory } from '../_lib/validation';
+import { getRequestContext, setCorsHeaders } from '../_lib/auth.js';
+import { validateCreateMemory } from '../_lib/validation.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setCorsHeaders(res);
@@ -51,6 +51,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (error: any) {
     console.error('Memories error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: error?.message || 'Internal server error' });
   }
 }

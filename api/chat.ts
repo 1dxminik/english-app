@@ -1,10 +1,10 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { getRequestContext, setCorsHeaders } from './_lib/auth';
-import { validateChatRequest } from './_lib/validation';
-import { checkRateLimit } from './_lib/rate-limit';
-import { buildContext } from './_lib/context';
-import { buildSystemPrompt } from './_lib/prompts';
-import { generateChatResponse } from './_lib/gemini';
+import { getRequestContext, setCorsHeaders } from './_lib/auth.js';
+import { validateChatRequest } from './_lib/validation.js';
+import { checkRateLimit } from './_lib/rate-limit.js';
+import { buildContext } from './_lib/context.js';
+import { buildSystemPrompt } from './_lib/prompts.js';
+import { generateChatResponse } from './_lib/gemini.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setCorsHeaders(res);
@@ -81,6 +81,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(200).json({ message: savedCharMsg, userMessage: savedUserMsg });
   } catch (error: any) {
     console.error('Chat error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: error?.message || 'Internal server error' });
   }
 }

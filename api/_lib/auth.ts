@@ -1,5 +1,5 @@
 import type { VercelResponse } from '@vercel/node';
-import { createAdminClient } from './supabase';
+import { createAdminClient } from './supabase.js';
 
 /**
  * Single-user app — no authentication needed.
