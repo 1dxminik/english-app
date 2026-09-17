@@ -10,6 +10,7 @@ export function useAudioRecorder() {
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<number | null>(null);
+  const selectedMimeRef = useRef<string>('audio/webm');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -33,16 +34,22 @@ export function useAudioRecorder() {
       });
       streamRef.current = stream;
 
-      // Select supported mimeType
+      // Detect supported mimeType (iOS Safari uses audio/mp4 or audio/aac, Chrome/Android uses audio/webm)
       const mimeTypes = [
+        'audio/mp4',
         'audio/webm;codecs=opus',
         'audio/webm',
-        'audio/mp4',
-        'audio/ogg',
+        'audio/aac',
+        'audio/wav',
       ];
-      const selectedMime = mimeTypes.find(m => MediaRecorder.isTypeSupported(m)) || '';
 
-      const options = selectedMime ? { mimeType: selectedMime } : {};
+      let chosenMime = '';
+      if (typeof MediaRecorder.isTypeSupported === 'function') {
+        chosenMime = mimeTypes.find(m => MediaRecorder.isTypeSupported(m)) || '';
+      }
+      selectedMimeRef.current = chosenMime || 'audio/mp4';
+
+      const options = chosenMime ? { mimeType: chosenMime } : {};
       const recorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = recorder;
 
@@ -52,14 +59,13 @@ export function useAudioRecorder() {
         }
       };
 
-      recorder.start(250); // Collect slice every 250ms
+      // Starting without a small timeslice is much more reliable across WebKit (iOS Safari)
+      recorder.start();
       setIsRecording(true);
 
-      // Timer
       const interval = window.setInterval(() => {
         setRecordingTime(prev => {
           if (prev >= 120) {
-            // Auto stop at 2 minutes
             stopRecording();
             return prev;
           }
@@ -70,7 +76,7 @@ export function useAudioRecorder() {
     } catch (err: any) {
       console.error('Microphone error:', err);
       setError(err.name === 'NotAllowedError'
-        ? 'Microphone access was denied. Please allow microphone permissions in your browser.'
+        ? 'Microphone permission was denied. Please allow microphone access in Safari settings.'
         : (err.message || 'Could not access microphone'));
     }
   }, []);
@@ -91,10 +97,9 @@ export function useAudioRecorder() {
 
       recorder.onstop = async () => {
         setIsRecording(false);
-        const actualMime = recorder.mimeType || 'audio/webm';
+        const actualMime = recorder.mimeType || selectedMimeRef.current || 'audio/mp4';
         const audioBlob = new Blob(chunksRef.current, { type: actualMime });
 
-        // Stop all tracks on the stream to turn off mic indicator
         if (streamRef.current) {
           streamRef.current.getTracks().forEach(t => t.stop());
           streamRef.current = null;
@@ -105,11 +110,9 @@ export function useAudioRecorder() {
           return;
         }
 
-        // Convert blob to base64
         const reader = new FileReader();
         reader.onloadend = () => {
           const base64data = (reader.result as string).split(',')[1];
-          // Strip codec parameters for Gemini inlineData
           const cleanMime = actualMime.split(';')[0];
           resolve({ audio: base64data, mimeType: cleanMime });
         };
