@@ -13,7 +13,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { data: conv, error: convErr } = await supabase
       .from('conversations')
-      .select('*')
+      .select('*, characters(name, role, avatar_url)')
       .eq('id', id)
       .eq('user_id', userId)
       .single();

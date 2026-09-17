@@ -9,19 +9,42 @@ export function MemoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all');
-  
+
   const [editingMemory, setEditingMemory] = useState<any>(null);
   const [isAdding, setIsAdding] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
+    setError('');
     try {
-      const [mems, chars] = await Promise.all([
+      const [memsData, charsData] = await Promise.all([
         apiClient.get('/api/memories'),
-        apiClient.get('/api/characters')
+        apiClient.get('/api/characters'),
       ]);
-      setMemories(mems);
-      setCharacters(chars);
+
+      const charList = Array.isArray(charsData) ? charsData : [];
+      setCharacters(charList);
+
+      const charMap = new Map(charList.map((c: any) => [c.id, c.name]));
+
+      const generalMems = (memsData?.memories || []).map((m: any) => ({
+        ...m,
+        type: 'memory',
+        characterName: m.character_id ? charMap.get(m.character_id) || m.character_id : null,
+      }));
+
+      const englishMems = (memsData?.english_memories || []).map((m: any) => ({
+        ...m,
+        type: 'english_memory',
+      }));
+
+      const combined = [...generalMems, ...englishMems].sort((a, b) => {
+        const da = new Date(a.created_at || a.createdAt || 0).getTime();
+        const db = new Date(b.created_at || b.createdAt || 0).getTime();
+        return db - da;
+      });
+
+      setMemories(combined);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch data');
     } finally {
@@ -35,7 +58,7 @@ export function MemoryPage() {
 
   const handleSave = async (data: any) => {
     if (editingMemory) {
-      await apiClient.put(`/api/memories/${editingMemory.id}`, data);
+      await apiClient.put(`/api/memories/${editingMemory.id}?type=${editingMemory.type}`, data);
     } else {
       await apiClient.post('/api/memories', data);
     }
@@ -44,17 +67,17 @@ export function MemoryPage() {
     fetchData();
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (memory: any) => {
     if (!confirm('Delete this memory?')) return;
     try {
-      await apiClient.del(`/api/memories/${id}`);
+      await apiClient.del(`/api/memories/${memory.id}?type=${memory.type}`);
       fetchData();
     } catch (err: any) {
       alert('Delete failed: ' + err.message);
     }
   };
 
-  const filteredMemories = memories.filter(m => {
+  const filteredMemories = memories.filter((m) => {
     if (filter === 'all') return true;
     if (filter === 'english') return m.type === 'english_memory';
     if (filter === 'character') return m.type === 'memory';
@@ -73,7 +96,7 @@ export function MemoryPage() {
       {error && <p className="error-message">{error}</p>}
 
       {(isAdding || editingMemory) ? (
-        <MemoryEditor 
+        <MemoryEditor
           memory={editingMemory}
           characters={characters}
           onSave={handleSave}
@@ -90,15 +113,15 @@ export function MemoryPage() {
           {loading ? (
             <div className="empty-state"><div className="loading-spinner"></div></div>
           ) : filteredMemories.length === 0 ? (
-            <div className="empty-state">No memories found.</div>
+            <div className="empty-state">No memories found. As you converse with characters, important facts and language observations will be saved here automatically.</div>
           ) : (
             <div>
-              {filteredMemories.map(m => (
-                <MemoryItem 
-                  key={m.id} 
-                  memory={m} 
+              {filteredMemories.map((m) => (
+                <MemoryItem
+                  key={m.id}
+                  memory={m}
                   onEdit={() => setEditingMemory(m)}
-                  onDelete={() => handleDelete(m.id)}
+                  onDelete={() => handleDelete(m)}
                 />
               ))}
             </div>

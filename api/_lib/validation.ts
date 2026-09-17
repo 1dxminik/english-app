@@ -1,11 +1,25 @@
 export function validateChatRequest(body: any) {
-  if (!body || !body.conversationId || !body.message) {
-    return { valid: false, error: 'Missing required fields' };
+  if (!body || !body.conversationId) {
+    return { valid: false, error: 'Missing conversationId' };
   }
-  if (typeof body.message !== 'string' || body.message.length < 1 || body.message.length > 2000) {
-    return { valid: false, error: 'Message must be between 1 and 2000 characters' };
+  if (!body.message && !body.audio) {
+    return { valid: false, error: 'Either message or audio must be provided' };
   }
-  return { valid: true, data: { conversationId: body.conversationId, message: body.message } };
+  if (body.message && (typeof body.message !== 'string' || body.message.length > 2000)) {
+    return { valid: false, error: 'Message must be at most 2000 characters' };
+  }
+  if (body.audio && typeof body.audio !== 'string') {
+    return { valid: false, error: 'Audio must be a base64 encoded string' };
+  }
+  return {
+    valid: true,
+    data: {
+      conversationId: body.conversationId,
+      message: body.message ? String(body.message).trim() : '',
+      audio: body.audio,
+      mimeType: body.mimeType || 'audio/webm',
+    },
+  };
 }
 
 export function validateCreateConversation(body: any) {

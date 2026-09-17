@@ -1,6 +1,12 @@
 import { useState, useCallback } from 'react';
 import { apiClient } from '../lib/api';
 
+export interface SendMessagePayload {
+  message?: string;
+  audio?: string;
+  mimeType?: string;
+}
+
 export function useChat() {
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -19,12 +25,21 @@ export function useChat() {
     }
   }, []);
 
-  const sendMessage = useCallback(async (conversationId: string, message: string) => {
+  const sendMessage = useCallback(async (conversationId: string, payload: string | SendMessagePayload) => {
     setLoading(true);
     setError('');
     try {
-      const data = await apiClient.post(`/api/chat`, { conversationId, message });
-      setMessages(prev => [...prev, data.userMessage, data.aiMessage].filter(Boolean));
+      const body = typeof payload === 'string'
+        ? { conversationId, message: payload }
+        : { conversationId, ...payload };
+
+      const data = await apiClient.post(`/api/chat`, body);
+      const characterReply = data.message || data.aiMessage;
+      const added: any[] = [];
+      if (data.userMessage) added.push(data.userMessage);
+      if (characterReply) added.push(characterReply);
+
+      setMessages(prev => [...prev, ...added]);
       return data;
     } catch (err: any) {
       setError(err.message);

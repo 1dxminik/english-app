@@ -8,7 +8,10 @@ interface MemoryItemProps {
 
 export function MemoryItem({ memory, onEdit, onDelete }: MemoryItemProps) {
   const isEnglish = memory.type === 'english_memory';
-  
+  const dateStr = memory.created_at || memory.createdAt;
+  const dateFormatted = dateStr ? new Date(dateStr).toLocaleDateString() : 'Recent';
+  const charDisplay = memory.characterName || memory.character?.name;
+
   return (
     <div className="memory-item card">
       <div className="memory-header">
@@ -16,9 +19,11 @@ export function MemoryItem({ memory, onEdit, onDelete }: MemoryItemProps) {
           <span className={`badge ${isEnglish ? 'badge-english' : 'badge-memory'}`}>
             {isEnglish ? 'English' : 'Fact'}
           </span>
-          <span className="badge badge-category">{memory.category}</span>
-          {memory.character && (
-            <span className="badge badge-character">👤 {memory.character.name}</span>
+          {memory.category && (
+            <span className="badge badge-category">{memory.category}</span>
+          )}
+          {charDisplay && (
+            <span className="badge badge-character">👤 {charDisplay}</span>
           )}
         </div>
         <div className="memory-actions">
@@ -30,8 +35,8 @@ export function MemoryItem({ memory, onEdit, onDelete }: MemoryItemProps) {
         <p>{memory.content}</p>
       </div>
       <div className="memory-footer">
-        <small className="memory-source">Source: {memory.source}</small>
-        <small className="memory-date">{new Date(memory.createdAt).toLocaleDateString()}</small>
+        <small className="memory-source">Source: {memory.source || 'ai'}</small>
+        <small className="memory-date">{dateFormatted}</small>
       </div>
     </div>
   );

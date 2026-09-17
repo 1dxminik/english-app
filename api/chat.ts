@@ -4,7 +4,7 @@ import { validateChatRequest } from './_lib/validation.js';
 import { checkRateLimit } from './_lib/rate-limit.js';
 import { buildContext } from './_lib/context.js';
 import { buildSystemPrompt } from './_lib/prompts.js';
-import { generateChatResponse } from './_lib/gemini.js';
+import { generateChatResponse, type ChatInput } from './_lib/gemini.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setCorsHeaders(res);
@@ -15,7 +15,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { userId, supabase } = getRequestContext();
     const validation = validateChatRequest(req.body);
     if (!validation.valid) return res.status(400).json({ error: validation.error });
-    const { conversationId, message } = validation.data!;
+    const { conversationId, message, audio, mimeType } = validation.data!;
 
     const rateLimit = await checkRateLimit(supabase, userId);
     if (!rateLimit.allowed) return res.status(429).json({ error: rateLimit.reason });
@@ -31,25 +31,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       content: m.content,
     }));
 
+    const chatInput: string | ChatInput = audio
+      ? { audio: { data: audio, mimeType } }
+      : (message || '');
+
     let geminiResponse;
     try {
-      geminiResponse = await generateChatResponse(systemPrompt, history, message);
+      geminiResponse = await generateChatResponse(systemPrompt, history, chatInput);
     } catch (e: any) {
       if (e.status === 429) return res.status(429).json({ error: e.message });
       throw e;
     }
 
+    const finalUserContent = geminiResponse.user_transcript?.trim() || message || '(voice message)';
+    const finalCharacterReply = geminiResponse.character_reply || '...';
+
     const { data: savedUserMsg } = await supabase.from('messages').insert({
       conversation_id: conversationId,
       role: 'user',
-      content: message,
+      content: finalUserContent,
       feedback: geminiResponse.feedback,
     }).select().single();
 
     const { data: savedCharMsg } = await supabase.from('messages').insert({
       conversation_id: conversationId,
       role: 'character',
-      content: geminiResponse.character_reply,
+      content: finalCharacterReply,
     }).select().single();
 
     await supabase.from('conversations').update({
@@ -59,7 +66,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (geminiResponse.memory_updates && geminiResponse.memory_updates.length > 0) {
       for (const update of geminiResponse.memory_updates) {
-        if (update.type === 'character_memory') {
+        if (update.type === 'character_memory' || update.type === 'memory' || update.type === 'add') {
           await supabase.from('memories').insert({
             user_id: userId,
             character_id: conv.character_id,
