@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI, SchemaType, type Schema } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-const modelName = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+const modelName = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
 
 const responseSchema: Schema = {
   type: SchemaType.OBJECT,
