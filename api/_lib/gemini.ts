@@ -112,7 +112,7 @@ export async function generateChatResponse(
             responseSchema: responseSchema,
           },
         },
-        { timeout: 18000 }
+        { timeout: 25000 }
       );
 
       const result = await model.generateContent({ contents });
