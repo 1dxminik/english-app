@@ -6,6 +6,8 @@ import { buildContext } from './_lib/context.js';
 import { buildSystemPrompt } from './_lib/prompts.js';
 import { generateChatResponse, type ChatInput } from './_lib/gemini.js';
 
+export const maxDuration = 60;
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setCorsHeaders(res);
   if (req.method === 'OPTIONS') return res.status(200).end();

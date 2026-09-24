@@ -12,7 +12,7 @@ export function ConversationPage() {
   const conversationId = searchParams.get('id');
   const navigate = useNavigate();
 
-  const { messages, loading: chatLoading, error: chatError, sendMessage, loadMessages } = useChat();
+  const { messages, loading: chatLoading, error: chatError, sendMessage, loadMessages, cancelCurrentRequest } = useChat();
   const {
     isRecording,
     recordingTime,
@@ -104,9 +104,19 @@ export function ConversationPage() {
         ))}
 
         {chatLoading && (
-          <div className="empty-state" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: '#666' }}>
-            <div className="loading-spinner"></div>
-            <span>{characterName} is listening & replying...</span>
+          <div className="empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', color: '#666' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div className="loading-spinner"></div>
+              <span>{characterName} is listening & replying...</span>
+            </div>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={cancelCurrentRequest}
+              style={{ fontSize: '0.8rem', padding: '0.25rem 0.75rem', borderRadius: '4px' }}
+            >
+              ✕ Cancel
+            </button>
           </div>
         )}
         <div ref={messagesEndRef} />

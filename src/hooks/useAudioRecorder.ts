@@ -34,11 +34,13 @@ export function useAudioRecorder() {
       });
       streamRef.current = stream;
 
-      // Detect supported mimeType (iOS Safari uses audio/mp4 or audio/aac, Chrome/Android uses audio/webm)
+      // Preferred MIME types:
+      // Chrome/Android/Desktop prefer audio/webm;codecs=opus (fastest, most compact)
+      // iOS Safari requires audio/mp4 or audio/aac
       const mimeTypes = [
-        'audio/mp4',
         'audio/webm;codecs=opus',
         'audio/webm',
+        'audio/mp4',
         'audio/aac',
         'audio/wav',
       ];
@@ -47,9 +49,14 @@ export function useAudioRecorder() {
       if (typeof MediaRecorder.isTypeSupported === 'function') {
         chosenMime = mimeTypes.find(m => MediaRecorder.isTypeSupported(m)) || '';
       }
-      selectedMimeRef.current = chosenMime || 'audio/mp4';
+      selectedMimeRef.current = chosenMime || 'audio/webm';
 
-      const options = chosenMime ? { mimeType: chosenMime } : {};
+      const options: MediaRecorderOptions = {
+        audioBitsPerSecond: 32000,
+      };
+      if (chosenMime) {
+        options.mimeType = chosenMime;
+      }
       const recorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = recorder;
 
@@ -95,9 +102,16 @@ export function useAudioRecorder() {
         return;
       }
 
-      recorder.onstop = async () => {
+      // Safety timeout: resolve if onstop never fires within 4 seconds
+      const safetyTimeout = setTimeout(() => {
         setIsRecording(false);
-        const actualMime = recorder.mimeType || selectedMimeRef.current || 'audio/mp4';
+        resolve(null);
+      }, 4000);
+
+      recorder.onstop = async () => {
+        clearTimeout(safetyTimeout);
+        setIsRecording(false);
+        const actualMime = recorder.mimeType || selectedMimeRef.current || 'audio/webm';
         const audioBlob = new Blob(chunksRef.current, { type: actualMime });
 
         if (streamRef.current) {

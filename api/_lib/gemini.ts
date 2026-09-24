@@ -6,7 +6,8 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 const CANDIDATE_MODELS = [
   process.env.GEMINI_MODEL || 'gemini-3.6-flash',
   'gemini-3.5-flash-lite',
-  'gemini-3.5-flash',
+  'gemini-3.8-flash',
+  'gemini-3.1-flash-lite',
 ];
 
 const responseSchema: Schema = {
@@ -101,15 +102,18 @@ export async function generateChatResponse(
   // Try candidate models in order to handle spikes or temporary service issues
   for (const modelName of CANDIDATE_MODELS) {
     try {
-      const model = genAI.getGenerativeModel({
-        model: modelName,
-        systemInstruction: systemPrompt,
-        generationConfig: {
-          maxOutputTokens: 1024,
-          responseMimeType: 'application/json',
-          responseSchema: responseSchema,
+      const model = genAI.getGenerativeModel(
+        {
+          model: modelName,
+          systemInstruction: systemPrompt,
+          generationConfig: {
+            maxOutputTokens: 1024,
+            responseMimeType: 'application/json',
+            responseSchema: responseSchema,
+          },
         },
-      });
+        { timeout: 18000 }
+      );
 
       const result = await model.generateContent({ contents });
       const responseText = result.response.text();
@@ -117,7 +121,9 @@ export async function generateChatResponse(
     } catch (error: any) {
       console.warn(`[Gemini] Model ${modelName} failed, trying next candidate. Error:`, error?.message || error);
       lastError = error;
-      // If error is not a transient 503/429/404, we still try next model
+      if (error?.status === 503) {
+        await new Promise((r) => setTimeout(r, 400));
+      }
     }
   }
 
